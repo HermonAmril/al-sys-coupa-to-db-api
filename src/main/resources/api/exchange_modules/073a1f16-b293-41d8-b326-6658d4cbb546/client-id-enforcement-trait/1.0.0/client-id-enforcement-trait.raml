@@ -1,0 +1,38 @@
+#%RAML 1.0 Trait
+
+headers:
+  client_id:
+    type: string
+    description: Client ID provided by API Manager
+    required: true
+    minLength: 10
+  client_secret:
+    type: string
+    description: Client secret provided by API Manager
+    required: true
+    minLength: 10
+responses:
+  401:
+    description: Unauthorized, The client_id or client_secret are not valid or the client does not have access.
+    body:
+      application/json:
+        examples:
+          output: !include /exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/examples/401-error.raml
+  429:
+    description: The client used all of it's request quota for the current period.
+    body:
+      application/json:
+        examples:
+          output: !include /exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/examples/429-error.raml
+  500:
+    description: An error ocurred, see the specific message.
+    body:
+      application/json:
+        examples:
+          output: !include /exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/examples/error-message.raml
+  503:
+    description: Contracts Information Unreachable.
+    body:
+      application/json:
+        examples:
+          output: !include /exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/examples/503-error.raml

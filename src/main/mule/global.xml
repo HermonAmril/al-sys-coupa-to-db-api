@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="7032dde1-4cd2-48da-8764-0cef52f24a8f" basePath="${al.sys.coupa.api.basepath}">
+		<http:request-connection protocol="HTTPS" host="${secure::al.sys.coupa.api.host}" >
+			<reconnection >
+				<reconnect />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="974b4fa1-1db1-4335-afd3-6b464121420d" >
+		<db:mssql-connection host="${secure::db.host}" instanceName="${secure::db.host}" port="1433" user="${secure::db.user}" password="${secure::db.password}" databaseName="${secure::db.database}" >
+			<reconnection >
+				<reconnect />
+			</reconnection>
+		</db:mssql-connection>
+	</db:config>
+	<cloudhub:config name="CloudHub_Config" doc:name="CloudHub Config" doc:id="80682322-d94b-42d6-adc7-32d4715edfc4" >
+		<cloudhub:connection username="${secure::cloudhub.username}" password="${secure::cloudhub.password}" environment="${secure::cloudhub.enviroment.id}"/>
+	</cloudhub:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="e6bfa3e4-989b-4eb7-a092-46ec97ea5d68" file="properties\coupa-api-${env}.properties" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="7edc4f42-9f02-4d4a-aa22-41fc52e64f91" file="properties\coupa-api-${env}.properties" key="${property.key}">
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	
+</mule>

@@ -1,0 +1,47 @@
+#%RAML 1.0
+title: al-sys-coupa-to-db-api
+description: System API that will send supplier information from coupa to db
+
+version: 1
+mediaType: application/json
+protocols: [HTTPS]
+types:
+
+  Error response: !include exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/error-response-examples.raml
+
+traits:
+  client-id-required: !include exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/client-id-enforcement-trait/1.0.0/client-id-enforcement-trait.raml
+
+securitySchemes:
+  basic:
+    description: This API supports Basic Authentication.
+    type: Basic Authentication
+
+/supplier-information:
+  post:
+    displayName: Send supplier information
+    description: Send supplier information
+
+    body:
+      application/json:
+        example:
+          !include examples/coupa-supplier-info.json
+    responses:
+      200:
+        description: Successful response
+        body:
+          application/json:
+            example: message successfully sent
+      400:
+        description: Error
+        body:
+          application/json:
+            type: Error response
+            example: !include exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/examples/error-message.raml
+      405:
+        description: 
+        body:
+          application/json:
+            example: !include exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/examples/405-error.raml
+
+

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	
+	<flow name="coupa-to-db-apiFlow" doc:id="dd7391d3-68ae-477a-93ca-40a780b9b881" >
+		<scheduler doc:name="Scheduler" doc:id="901c62e8-2796-4419-a7f5-de9b0a33073a" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="DAYS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[now() -|P1D|]" doc:name="Set Variable" doc:id="07fd110b-c5b8-4b00-934f-98d2f0905bee" variableName="lastCeated"/>
+		<http:request method="GET" doc:name="Request" doc:id="36eeaca3-592b-4824-b6d2-224a8ee985ea" config-ref="HTTP_Request_configuration" path="${secure::al.sys.coupa.api.path}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : Mule::p('secure::al.sys.coupa.api.client_secret'),
+	"Authorization" : "Basic " ++  Mule::p('secure::al.sys.coupa.api.authorization'),
+	"Accept" : "application/json",
+	"Content-Type" : "application/json",
+	"client_id" : Mule::p('secure::al.sys.coupa.api.client_id')
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"created-after" : vars.lastCeated
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="b4fc0588-13b8-4de2-a27f-60466babde4f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) -> {
+    supplierName: item.name,
+    supplierId: item."supplier-id",
+    streetAddress: item."supplier-information-addresses"."street-address"[0],
+zipCode: item."supplier-information-addresses"."postal-code"[0],
+city: item."supplier-information-addresses".city[0],
+state: item."supplier-information-addresses"."state-region"[0],
+email: item."supplier-information-addresses".email[0],
+ssn: item."custom-fields"."ein-ssn"
+    
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<try doc:name="Try" doc:id="e99451c2-d0b3-47a0-850d-6f7bca44e4c8" >
+			<foreach doc:name="For Each" doc:id="2a9fd7a4-4575-4eb4-a9cf-be2debad16f6" collection="#[payload]">
+			<db:insert doc:name="Insert" doc:id="e72155ae-7090-44df-8f71-224c5d761744" config-ref="Database_Config">
+			<db:sql><![CDATA[insert into dbo.coupa_supplier_information(
+supplierName,
+supplierId,
+streetAddress,
+city,
+state,
+zipCode,
+email,
+ssn) values (
+:supplierName,
+:supplierId,
+:streetAddress,
+:city,
+:state,
+:zipCode,
+:email,
+:ssn)]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	supplierName: payload.supplierName,
+	supplierId: payload.supplierId,
+	streetAddress: payload.streetAddress,
+	city: payload.city,
+	state: payload.state,
+	zipCode: payload.zipCode,
+	email: payload.email,
+	ssn: payload.ssn
+}]]]></db:input-parameters>
+		</db:insert>
+		</foreach>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="727905e8-213c-4dfb-8560-3dfab202ff4c" type="ANY">
+	<ee:transform doc:name="Set Error Values" doc:id="78309e6e-3477-4f2c-93ec-71092ef6c999">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="errorMsg"><![CDATA[%dw 2.0
+output application/java
+---
+//error.description
+error.errorMessage.payload.message default error.description]]></ee:set-variable>
+				<ee:set-variable variableName="interface"><![CDATA[%dw 2.0
+output application/java
+---
+"Supplier-Info-Interface"]]></ee:set-variable>
+				<ee:set-variable variableName="transactionId"><![CDATA[%dw 2.0
+output application/java
+---
+correlationId]]></ee:set-variable>
+				<ee:set-variable variableName="priority"><![CDATA[%dw 2.0
+output application/java
+---
+"ERROR"]]></ee:set-variable>
+				<ee:set-variable variableName="domain"><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p('secure::cloudhub.domain')]]></ee:set-variable>
+				<ee:set-variable variableName="api"><![CDATA[%dw 2.0
+output application/java
+---
+"coupa-to-db-supplier-api"]]></ee:set-variable>
+				<ee:set-variable variableName="message"><![CDATA[%dw 2.0
+output application/java
+---
+"coupa-to-db-supplier-api error."]]></ee:set-variable>
+				<ee:set-variable variableName="keyTime"><![CDATA[%dw 2.0
+output application/java
+---
+"supplier-info-last-error"]]></ee:set-variable>
+							<ee:set-variable variableName="req" ><![CDATA[%dw 2.0
+output text/plain
+---
+vars.requestMsg.^raw]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+					<flow-ref doc:name="Flow Reference" doc:id="4e6b5a4b-f43b-4579-84e4-265211138a0d" name="error-handlingFlow"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+</mule>

@@ -1,0 +1,25 @@
+#%RAML 1.0 Library
+usage:
+
+traits:
+  client-id-required: !include /exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/client-id-enforcement-trait/1.0.0/client-id-enforcement-trait.raml
+  400-error:
+    responses:
+      400:
+        description: Error 
+        body:
+          application/json:
+            type: ErrorResponse
+            examples:
+              output: !include /exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/examples/error-message.raml
+  header-content-type:
+    headers:
+      Content-Type: 
+        type: string
+        required: true
+        default: application/json
+
+types:
+  ErrorResponse: !include /exchange_modules/073a1f16-b293-41d8-b326-6658d4cbb546/error-response-examples/1.0.0/error-response-examples.raml
+  GenericPayload: !include types/trigger-payload.raml
+  CommonResponse: 

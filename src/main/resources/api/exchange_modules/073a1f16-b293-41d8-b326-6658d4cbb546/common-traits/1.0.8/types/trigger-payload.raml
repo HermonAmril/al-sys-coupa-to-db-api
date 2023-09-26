@@ -1,0 +1,17 @@
+#%RAML 1.0 DataType
+displayName: Trigger payload
+description: Defines the fields in Trigger payload type
+
+type: object
+properties:
+  sequenceId?:
+    type: string
+  isProcessed?:
+    type: integer
+    default: 0
+  firstExtractDate?: 
+    type: datetime
+    example: 2016-02-28T16:41:41.090Z
+  extractEndDate?:
+    type: datetime
+    example: 2016-02-28T16:41:41.090Z

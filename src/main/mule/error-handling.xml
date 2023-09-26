@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="error-handlingFlow" doc:id="5ea7d598-ee65-4dea-998f-b3a1b411528b" >
+		<cloudhub:create-notification doc:name="Create Notification" doc:id="ad8fcd14-9aa1-4975-bc96-2d9be98a231d" config-ref="CloudHub_Config" domain="#[vars.domain]" priority="#[vars.priority]">
+			<cloudhub:message ><![CDATA[#[vars.message]]]></cloudhub:message>
+			<cloudhub:custom-properties ><![CDATA[#[output application/java
+---
+{
+	"payload" : vars.req,
+	"errorMsg" : vars.errorMsg,
+	"transactionId" : vars.transactionId,
+	"interface" : vars.interface,
+	"target": vars.api
+}]]]></cloudhub:custom-properties>
+		</cloudhub:create-notification>
+<!-- 		<cloudhub:create-notification domain="" doc:name="Create Notification" doc:id="94ef558c-683c-491f-98da-726d1bdc2155" /> -->
+	</flow>
+</mule>

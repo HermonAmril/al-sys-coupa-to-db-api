@@ -1,0 +1,16 @@
+#%RAML 1.0 DataType
+
+displayName: Error response
+description: Structure of error response 
+
+type: object
+properties:
+  status:
+    description: Message status
+    type: string
+    enum: [Success, Failure]
+    required: true
+  message:
+    description: Detail error message
+    type: string
+    required: true
